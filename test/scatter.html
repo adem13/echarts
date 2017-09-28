@@ -29,11 +29,17 @@
                 var data2 = [];
                 var data3 = [];
 
+                var names = [
+                    'diamond, red, show inside label only on hover',
+                    'green, show top label only on hover',
+                    'indigo, show inside label on normal'
+                ];
+
                 var random = function (max) {
                     return (Math.random() * max).toFixed(3);
                 }
 
-                for (var i = 0; i < 30; i++) {
+                for (var i = 0; i < 50; i++) {
                     data1.push([random(5), random(5), random(2)]);
                     data2.push([random(10), random(10), random(2)]);
                     data3.push([random(15), random(10), random(2)]);
@@ -41,13 +47,14 @@
 
                 chart.setOption({
                     legend: {
-                        data: ['scatter', 'scatter2', 'scatter3']
+                        data: names.slice()
                     },
                     toolbox: {
                         left: 'left',
                         feature: {
                             dataView: {},
-                            saveAsImage: {}
+                            saveAsImage: {},
+                            dataZoom: {}
                         }
                     },
                     tooltip: {
@@ -72,49 +79,48 @@
                         }
                     },
                     series: [{
-                        name: 'scatter',
+                        name: names[0],
                         type: 'scatter',
                         label: {
                             emphasis: {
                                 show: true
                             }
                         },
-                        // symbol: 'diamond',
+                        symbol: 'diamond',
                         symbolSize: function (val) {
                             return val[2] * 40;
                         },
-                        // itemStyle: {
-                        //     normal: {
-                        //         color: function (params) {
-                        //             return 'rgba(30, 70, 50, ' + params.value[2] + ')';
-                        //         }
-                        //     }
-                        // },
                         data: data1
-                    }, {
-                        name: 'scatter2',
+                    },
+                    {
+                        name: names[1],
                         type: 'scatter',
                         label: {
                             emphasis: {
-                                show: true
+                                show: true,
+                                position: 'top',
+                                formatter: function (params) {
+                                    return params.value;
+                                }
                             }
                         },
                         symbolSize: function (val) {
                             return val[2] * 40;
                         },
-                        // itemStyle: {
-                        //     normal: {
-                        //         label: {
-                        //             show: true
-                        //         }
-                        //     }
-                        // },
+                        itemStyle: {
+                            normal: {
+                                color: function (params) {
+                                    return 'rgba(30, 70, 50, ' + params.value[2] + ')';
+                                }
+                            }
+                        },
                         data: data2
-                    }, {
-                        name: 'scatter3',
+                    },
+                    {
+                        name: names[2],
                         type: 'scatter',
                         label: {
-                            emphasis: {
+                            normal: {
                                 show: true
                             }
                         },
@@ -122,7 +128,17 @@
                             return val[2] * 40;
                         },
                         data: data3
-                    }]
+                    }],
+                    animationDelay: function (idx) {
+                        return idx * 20;
+                    },
+                    animationDelayUpdate: function (idx) {
+                        return idx * 20;
+                    }
+                });
+
+                chart.on('click', function (params) {
+                    console.log(params.data);
                 });
             })
 

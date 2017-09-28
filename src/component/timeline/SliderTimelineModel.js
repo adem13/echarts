@@ -4,8 +4,10 @@
 define(function(require) {
 
     var TimelineModel = require('./TimelineModel');
+    var zrUtil = require('zrender/core/util');
+    var modelUtil = require('../../util/model');
 
-    return TimelineModel.extend({
+    var SliderTimelineModel = TimelineModel.extend({
 
         type: 'timeline.slider',
 
@@ -43,15 +45,13 @@ define(function(require) {
                     interval: 'auto',
                     rotate: 0,
                     // formatter: null,
-                    textStyle: {                // 其余属性默认使用全局文本样式，详见TEXTSTYLE
-                        color: '#304654'
-                    }
+                    // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                    color: '#304654'
                 },
                 emphasis: {
                     show: true,
-                    textStyle: {                // 其余属性默认使用全局文本样式，详见TEXTSTYLE
-                        color: '#c23531'
-                    }
+                    // 其余属性默认使用全局文本样式，详见TEXTSTYLE
+                    color: '#c23531'
                 }
             },
             itemStyle: {
@@ -103,4 +103,7 @@ define(function(require) {
 
     });
 
+    zrUtil.mixin(SliderTimelineModel, modelUtil.dataFormatMixin);
+
+    return SliderTimelineModel;
 });

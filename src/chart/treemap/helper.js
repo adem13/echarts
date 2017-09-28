@@ -24,27 +24,39 @@ define(function (require) {
             }
         },
 
+        // Not includes the given node at the last item.
         getPathToRoot: function (node) {
             var path = [];
             while (node) {
-                path.push(node);
                 node = node.parentNode;
+                node && path.push(node);
             }
             return path.reverse();
         },
 
         aboveViewRoot: function (viewRoot, node) {
             var viewPath = helper.getPathToRoot(viewRoot);
-            return helper.aboveViewRootByViewPath(viewPath, node);
+            return zrUtil.indexOf(viewPath, node) >= 0;
         },
 
-        // viewPath should obtained from getPathToRoot(viewRoot)
-        aboveViewRootByViewPath: function (viewPath, node) {
-            var index = zrUtil.indexOf(viewPath, node);
-            // The last one is viewRoot
-            return index >= 0 && index !== viewPath.length - 1;
-        }
+        // From root to the input node (the input node will be included).
+        wrapTreePathInfo: function (node, seriesModel) {
+            var treePathInfo = [];
 
+            while (node) {
+                var nodeDataIndex = node.dataIndex;
+                treePathInfo.push({
+                    name: node.name,
+                    dataIndex: nodeDataIndex,
+                    value: seriesModel.getRawValue(nodeDataIndex)
+                });
+                node = node.parentNode;
+            }
+
+            treePathInfo.reverse();
+
+            return treePathInfo;
+        }
     };
 
     return helper;

@@ -26,15 +26,18 @@ define(function (require) {
                 if (symbolType === 'none') {
                     return;
                 }
+                var symbolSize = normalizeSymbolSize(
+                    data.getItemVisual(idx, 'symbolSize')
+                );
                 var symbolPath = symbolUtil.createSymbol(
-                    symbolType, -0.5, -0.5, 1, 1, color
+                    symbolType, -1, -1, 2, 2, color
                 );
                 symbolPath.attr({
                     style: {
                         strokeNoScale: true
                     },
                     z2: 100,
-                    scale: normalizeSymbolSize(data.getItemVisual(idx, 'symbolSize'))
+                    scale: [symbolSize[0] / 2, symbolSize[1] / 2]
                 });
                 return symbolPath;
             }
@@ -51,7 +54,7 @@ define(function (require) {
                             graphic[isInit ? 'initProps' : 'updateProps'](
                                 symbolPath, {
                                     position: newPoints[i]
-                                }, seriesModel
+                                }, seriesModel, idx
                             );
                         }
                         else {
@@ -82,8 +85,8 @@ define(function (require) {
                     };
                     polygon.shape.points = getInitialPoints(points);
                     polyline.shape.points = getInitialPoints(points);
-                    graphic.initProps(polygon, target, seriesModel);
-                    graphic.initProps(polyline, target, seriesModel);
+                    graphic.initProps(polygon, target, seriesModel, idx);
+                    graphic.initProps(polyline, target, seriesModel, idx);
 
                     var itemGroup = new graphic.Group();
                     var symbolGroup = new graphic.Group();
@@ -133,10 +136,11 @@ define(function (require) {
 
                 group.add(itemGroup);
 
-                polyline.setStyle(
-                    zrUtil.extend(
+                polyline.useStyle(
+                    zrUtil.defaults(
                         itemModel.getModel('lineStyle.normal').getLineStyle(),
                         {
+                            fill: 'none',
                             stroke: color
                         }
                     )
@@ -151,7 +155,7 @@ define(function (require) {
                 hoverPolygonIgnore = hoverPolygonIgnore && polygonIgnore;
                 polygon.ignore = polygonIgnore;
 
-                polygon.setStyle(
+                polygon.useStyle(
                     zrUtil.defaults(
                         areaStyleModel.getAreaStyle(),
                         {
@@ -170,24 +174,17 @@ define(function (require) {
                     symbolPath.setStyle(itemStyle);
                     symbolPath.hoverStyle = zrUtil.clone(itemHoverStyle);
 
-                    var defaultText = data.get(data.dimensions[symbolPath.__dimIdx], idx);
-                    graphic.setText(symbolPath.style, labelModel, color);
-                    symbolPath.setStyle({
-                        text: labelModel.get('show') ? zrUtil.retrieve(
-                            seriesModel.getFormattedLabel(
-                                idx, 'normal', null, symbolPath.__dimIdx
-                            ),
-                            defaultText
-                        ) : ''
-                    });
-
-                    graphic.setText(symbolPath.hoverStyle, labelHoverModel, color);
-                    symbolPath.hoverStyle.text = labelHoverModel.get('show') ? zrUtil.retrieve(
-                        seriesModel.getFormattedLabel(
-                            idx, 'emphasis', null, symbolPath.__dimIdx
-                        ),
-                        defaultText
-                    ) : '';
+                    graphic.setLabelStyle(
+                        symbolPath.style, symbolPath.hoverStyle, labelModel, labelHoverModel,
+                        {
+                            labelFetcher: data.hostModel,
+                            labelDataIndex: idx,
+                            labelDimIndex: symbolPath.__dimIdx,
+                            defaultText: data.get(data.dimensions[symbolPath.__dimIdx], idx),
+                            autoColor: color,
+                            isRectText: true
+                        }
+                    );
                 });
 
                 function onEmphasis() {
@@ -213,6 +210,8 @@ define(function (require) {
         remove: function () {
             this.group.removeAll();
             this._data = null;
-        }
+        },
+
+        dispose: function () {}
     });
 });

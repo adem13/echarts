@@ -5,7 +5,7 @@ define(function (require) {
 
     var echarts = require('../../echarts');
 
-    echarts.registerProcessor('filter', function (ecModel, api) {
+    echarts.registerProcessor(function (ecModel, api) {
 
         ecModel.eachComponent('dataZoom', function (dataZoomModel) {
             // We calculate window and reset axis here but not in model
@@ -36,12 +36,13 @@ define(function (require) {
             var axisProxy = dataZoomModel.findRepresentativeAxisProxy();
             var percentRange = axisProxy.getDataPercentWindow();
             var valueRange = axisProxy.getDataValueWindow();
+
             dataZoomModel.setRawRange({
                 start: percentRange[0],
                 end: percentRange[1],
                 startValue: valueRange[0],
                 endValue: valueRange[1]
-            });
+            }, true);
         });
     });
 

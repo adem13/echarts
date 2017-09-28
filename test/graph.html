@@ -51,6 +51,9 @@
                         node.label = {
                             normal: {
                                 show: node.symbolSize > 30
+                            },
+                            emphasis: {
+                                show: true
                             }
                         };
                         node.category = node.attributes['modularity_class'];
@@ -66,12 +69,6 @@
                                 return a.name;
                             })
                         }],
-                        // visualMap: {
-                        //     max: 100,
-                        //     inRange: {
-                        //         colorSaturation: [1, 0.3]
-                        //     }
-                        // },
                         animationDurationUpdate: 1500,
                         animationEasingUpdate: 'quinticInOut',
                         series : [
@@ -83,6 +80,21 @@
                                 links: graph.links,
                                 categories: categories,
                                 roam: true,
+                                draggable: true,
+                                itemStyle: {
+                                    normal: {
+                                        borderColor: '#fff',
+                                        borderWidth: 2,
+                                        shadowBlur: 10,
+                                        shadowColor: 'rgba(0, 0, 0, 0.3)'
+                                    }
+                                },
+                                focusNodeAdjacency: true,
+                                // edgeSymbol: ['none', 'arrow'],
+                                // scaleLimit: {
+                                //     min: 1.5,
+                                //     max: 2
+                                // },
                                 label: {
                                     normal: {
                                         position: 'right',
@@ -91,7 +103,11 @@
                                 },
                                 lineStyle: {
                                     normal: {
+                                        color: 'source',
                                         curveness: 0.3
+                                    },
+                                    emphasis: {
+                                        width: 10
                                     }
                                 }
                             }
@@ -101,8 +117,27 @@
                     chart.setOption(option);
 
                     var config = {
-                        layout: 'none'
+                        layout: 'none',
+                        focusNodeAdjacency: true,
+                        manualFocusNodeAdjacency: function () {
+                            chart.dispatchAction({
+                                type: 'focusNodeAdjacency',
+                                seriesName: 'Les Miserables',
+                                dataIndex: 2
+                            });
+                        },
+                        manualUnfocusNodeAdjacency: function () {
+                            chart.dispatchAction({
+                                type: 'unfocusNodeAdjacency',
+                                seriesName: 'Les Miserables'
+                            });
+                        },
+                        'circular.rotateLabel': false
                     };
+
+                    chart.on('click', function (params) {
+                        console.log(params, params.data);
+                    });
 
                     var gui = new dat.GUI();
                     gui.add(config, 'layout', ['none', 'circular'])
@@ -111,6 +146,26 @@
                                 series: [{
                                     name: 'Les Miserables',
                                     layout: value
+                                }]
+                            });
+                        });
+                    gui.add(config, 'focusNodeAdjacency')
+                        .onChange(function (value) {
+                            chart.setOption({
+                                series: [{
+                                    name: 'Les Miserables',
+                                    focusNodeAdjacency: value
+                                }]
+                            });
+                        });
+                    gui.add(config, 'manualFocusNodeAdjacency');
+                    gui.add(config, 'manualUnfocusNodeAdjacency');
+                    gui.add(config, 'circular.rotateLabel')
+                        .onChange(function (value) {
+                            chart.setOption({
+                                series: [{
+                                    name: 'Les Miserables',
+                                    circular: {rotateLabel: !!value}
                                 }]
                             });
                         });

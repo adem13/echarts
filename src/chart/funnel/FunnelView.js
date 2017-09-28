@@ -38,21 +38,6 @@ define(function (require) {
 
     var funnelPieceProto = FunnelPiece.prototype;
 
-    function getLabelStyle(data, idx, state, labelModel) {
-        var textStyleModel = labelModel.getModel('textStyle');
-        var position = labelModel.get('position');
-        var isLabelInside = position === 'inside' || position === 'inner' || position === 'center';
-        return {
-            fill: textStyleModel.getTextColor()
-                || (isLabelInside ? '#fff' : data.getItemVisual(idx, 'color')),
-            textFont: textStyleModel.getFont(),
-            text: zrUtil.retrieve(
-                data.hostModel.getFormattedLabel(idx, state),
-                data.getName(idx)
-            )
-        };
-    }
-
     var opacityAccessPath = ['itemStyle', 'normal', 'opacity'];
     funnelPieceProto.updateData = function (data, idx, firstCreate) {
 
@@ -63,23 +48,30 @@ define(function (require) {
         var layout = data.getItemLayout(idx);
         var opacity = data.getItemModel(idx).get(opacityAccessPath);
         opacity = opacity == null ? 1 : opacity;
+
+        // Reset style
+        polygon.useStyle({});
+
         if (firstCreate) {
             polygon.setShape({
                 points: layout.points
             });
             polygon.setStyle({ opacity : 0 });
-            graphic.updateProps(polygon, {
+            graphic.initProps(polygon, {
                 style: {
                     opacity: opacity
                 }
-            }, seriesModel);
+            }, seriesModel, idx);
         }
         else {
-            graphic.initProps(polygon, {
+            graphic.updateProps(polygon, {
+                style: {
+                    opacity: opacity
+                },
                 shape: {
                     points: layout.points
                 }
-            }, seriesModel);
+            }, seriesModel, idx);
         }
 
         // Update common style
@@ -89,9 +81,10 @@ define(function (require) {
         polygon.setStyle(
             zrUtil.defaults(
                 {
+                    lineJoin: 'round',
                     fill: visualColor
                 },
-                itemStyleModel.getModel('normal').getItemStyle()
+                itemStyleModel.getModel('normal').getItemStyle(['opacity'])
             )
         );
         polygon.hoverStyle = itemStyleModel.getModel('emphasis').getItemStyle();
@@ -116,20 +109,15 @@ define(function (require) {
             shape: {
                 points: labelLayout.linePoints || labelLayout.linePoints
             }
-        }, seriesModel);
+        }, seriesModel, idx);
 
         graphic.updateProps(labelText, {
             style: {
                 x: labelLayout.x,
                 y: labelLayout.y
             }
-        }, seriesModel);
+        }, seriesModel, idx);
         labelText.attr({
-            style: {
-                textAlign: labelLayout.textAlign,
-                textVerticalAlign: labelLayout.verticalAlign,
-                textFont: labelLayout.font
-            },
             rotation: labelLayout.rotation,
             origin: [labelLayout.x, labelLayout.y],
             z2: 10
@@ -139,8 +127,22 @@ define(function (require) {
         var labelHoverModel = itemModel.getModel('label.emphasis');
         var labelLineModel = itemModel.getModel('labelLine.normal');
         var labelLineHoverModel = itemModel.getModel('labelLine.emphasis');
+        var visualColor = data.getItemVisual(idx, 'color');
 
-        labelText.setStyle(getLabelStyle(data, idx, 'normal', labelModel));
+        graphic.setLabelStyle(
+            labelText.style, labelText.hoverStyle = {}, labelModel, labelHoverModel,
+            {
+                labelFetcher: data.hostModel,
+                labelDataIndex: idx,
+                defaultText: data.getName(idx),
+                autoColor: visualColor,
+                useInsideStyle: !!labelLayout.inside
+            },
+            {
+                textAlign: labelLayout.textAlign,
+                textVerticalAlign: labelLayout.verticalAlign
+            }
+        );
 
         labelText.ignore = labelText.normalIgnore = !labelModel.get('show');
         labelText.hoverIgnore = !labelHoverModel.get('show');
@@ -154,7 +156,6 @@ define(function (require) {
         });
         labelLine.setStyle(labelLineModel.getModel('lineStyle').getLineStyle());
 
-        labelText.hoverStyle = getLabelStyle(data, idx, 'emphasis', labelHoverModel);
         labelLine.hoverStyle = labelLineHoverModel.getModel('lineStyle').getLineStyle();
     };
 
@@ -199,7 +200,9 @@ define(function (require) {
         remove: function () {
             this.group.removeAll();
             this._data = null;
-        }
+        },
+
+        dispose: function () {}
     });
 
     return Funnel;
